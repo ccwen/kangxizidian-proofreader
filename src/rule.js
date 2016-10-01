@@ -75,8 +75,8 @@ var markLine=function(i,rebuild) {
 			element.marker=marker;
 		});
 
-		line.replace(/#(\d+)/g,function(m,m1,idx){
-			var element=createMarker("footnote",m1);
+		line.replace(/#(\d+)\.(\d+)/g,function(m,m1,m2,idx){
+			var element=createMarker("footnote",m1+"."+m2);
 			var marker=doc.markText({line:i,ch:idx},{line:i,ch:idx+m.length},
 				{clearOnEnter:true,replacedWith:element});
 			element.marker=marker;
@@ -151,13 +151,11 @@ var getPageByLine=function(line) {
 		}
 		return PBLINE[PBLINE.length-1][1];//default
 }
+
 var getFootnote=function(str,pg){
-	var m=str.match(/#(\d+)/);
+	var m=str.match(/#(\d+)\.(\d+)/);
 	if (m){
-		var footnoteinpage=footnote[pg];
-		if (footnoteinpage){
-			return pg+"#" +footnoteinpage[parseInt(m[1])-1];
-		}
+		return pg+"#" +footnote[m[1]+"."+m[2]];
 	}
 	return "";
 }

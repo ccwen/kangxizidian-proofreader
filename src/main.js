@@ -65,6 +65,17 @@ const Maincomponent = React.createClass({
 			this.prepareCM(this.getPageStartIndex(pageid)+index);
 		});
 	}
+	,goto:function(index){
+		if (!index)return;
+		var pos=this.cm.posFromIndex(index);
+		this.cm.scrollIntoView(pos,400);
+		setTimeout(()=>{
+			this.cm.doc.setCursor(pos);
+			this.cm.focus();
+			this.cm.doc.markText(pos,{line:pos.line,ch:pos.ch+1},
+			{className:"pinpoint",clearOnEnter:true});
+		},500);
+	}
 	,prepareCM:function(index){
 		this.cm=this.refs.cm.getCodeMirror();//codemirror instance
 		rule.setHotkeys(this.cm);
@@ -72,18 +83,7 @@ const Maincomponent = React.createClass({
 
 		rule.setDoc(this.doc);
 		rule.markAllLine();
-
-		if(index){
-			var pos=this.cm.posFromIndex(index);
-			this.cm.scrollIntoView(pos,400);
-			setTimeout(()=>{
-				console.log("pinpoint")
-				this.cm.doc.setCursor(pos);
-				this.cm.focus();
-				this.cm.doc.markText(pos,{line:pos.line,ch:pos.ch+1},
-				{className:"pinpoint",clearOnEnter:true});
-			},500);
-		}
+		this.goto(index);
 	}
 	,componentDidMount:function(){
 		this.prepareCM();
