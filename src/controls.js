@@ -54,6 +54,7 @@ var loadSaveButtons=React.createClass({
 	}
 	,savefile:function(){
 		if (!this.props.dirty)return;
+		
 		var action=this.context.action;
 		var content=this.context.getter("getcontent");
 		this.context.getter("save",{fn:this.state.fn,content},function(err){
@@ -72,6 +73,7 @@ var loadSaveButtons=React.createClass({
 		this.setState({elapse: Math.floor((new Date()-this.state.starttime)/1000) });
 	}
 	,render:function(){
+		if (this.props.preview)return E("span");
 		return E("div",{},
 			E("button",{onClick:this.loadfile,disabled:this.props.dirty},"load"),
 			E("input",{size:8,onKeyPress:this.onKeyPress,

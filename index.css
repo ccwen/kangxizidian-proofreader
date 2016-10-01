@@ -1,4 +1,4 @@
-/* application css */
+﻿/* application css */
 #main {font-size:150%}
 .hl {color:red;}
 .tagmarker{font-size:50%;}
@@ -8,13 +8,14 @@
 .correction{color:darkgreen;}
 .warning {background:red;width:100%;color:yellow;}
 .sutta {font-size:135%;color:brown;}
-
+.pinpoint{background-color:red;color:yellow;}
 
 .wh {
 	font-size:100%;
 }
 
 .v {writing-mode: vertical-lr;
+		cursor:pointer;
     -webkit-writing-mode: vertical-lr;
     font-size:25px;
     font-family: "DFKai-SB";
@@ -34,7 +35,7 @@
  top:0px;
  right:0px;
  left:0px;
- width:100%;
+ width:50%;
   font-size:50%;
  height:100%;
 }
@@ -42,11 +43,17 @@
 	position:absolute;
  top:0px;
  left:50%;
- width:100%;
+ width:50%;
  font-size:50%;
  height:100%;
 }
 
+.ruler {
+	position:absolute;
+	width:100%;
+	background-color:rgba(128,1128,255,128);
+	height:10px;
+}
 
 .warichu1::after {content:" "}
 .warichu2::after {content:"　"}

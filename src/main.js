@@ -34,9 +34,15 @@ const Maincomponent = React.createClass({
 		listen("loaded",this.loaded,this);
 		listen("saved",this.saved,this);
 		listen("nextwarning",this.nextwarning,this);
+		listen("pinpoint",this.pinpoint,this);
 		registerGetter("getcontent",this.getcontent);
 		registerGetter("setcontent",this.setcontent);
 		registerGetter("getpagetext",this.getPageText);
+	}
+	,getPageStartIndex:function(pageid){
+		const start="~"+pageid||this.state.pageid;
+		var index=this.getcontent().indexOf(start);
+		return index;
 	}
 	,getPageText:function(){
 		const content=this.getcontent();
@@ -44,21 +50,40 @@ const Maincomponent = React.createClass({
 		var from=content.indexOf(start);
 		from+=start.length+1;
 		var to=content.indexOf("~"+(parseInt(this.state.pageid,10)+1));
-		if (to==-1) to=content.length;
+		if (to==-1) to=content.length; 
 		return content.substring(from,to);
 	}
 	,componentWillUnmount:function(){
 		unregisterGetter("getcontent");
 		unregisterGetter("setcontent");
 		unregisterGetter("getpagetext");
+		unlistenAll(this);
 	}
-	,prepareCM:function(){
+	,pinpoint:function(index){
+		const pageid=this.state.pageid;
+		this.setState({preview:null},()=>{
+			this.prepareCM(this.getPageStartIndex(pageid)+index);
+		});
+	}
+	,prepareCM:function(index){
 		this.cm=this.refs.cm.getCodeMirror();//codemirror instance
 		rule.setHotkeys(this.cm);
 		this.doc=this.cm.getDoc();
 
 		rule.setDoc(this.doc);
 		rule.markAllLine();
+
+		if(index){
+			var pos=this.cm.posFromIndex(index);
+			this.cm.scrollIntoView(pos,400);
+			setTimeout(()=>{
+				console.log("pinpoint")
+				this.cm.doc.setCursor(pos);
+				this.cm.focus();
+				this.cm.doc.markText(pos,{line:pos.line,ch:pos.ch+1},
+				{className:"pinpoint",clearOnEnter:true});
+			},500);
+		}
 	}
 	,componentDidMount:function(){
 		this.prepareCM();
@@ -124,7 +149,8 @@ const Maincomponent = React.createClass({
 			this.setState({preview:null},()=>this.prepareCM())
 		} else {
 			const preview=this.getPageText();
-			this.setState({preview});
+			const data=this.getcontent();//get content from editor and save in state
+			this.setState({preview,data});
 		}
 	}	
 	,TextViewer:function(){
@@ -139,16 +165,14 @@ const Maincomponent = React.createClass({
 	}
   ,render: function() {
   	return E("div",{},E(Controls,{dirty:this.state.dirty,
+  		preview:!!this.state.preview,
   		warnings:this.state.warningcount+" warnings"
   		,togglePreview:this.togglePreview
   		,helpmessage:rule.helpmessage}),
     	E("div",{style:{display:"flex",flexDirection:"row"}},
       	E("div",{style:{flex:2}},
-    			//E("img",{ref:"image" ,id:"thumb",style:styles.image,
-		    	//		src:rule.getimagefilename(this.state.pageid)})
-    			//)
     			E(PDFViewer,{ref:"pdf", style:styles.image,rwidth:2/5,
-    				page:this.state.page,pdffn:this.state.pdffn})
+    				page:this.state.page,pdffn:this.state.pdffn,scale:1.3})
     			)
     		,E("div",{style:{flex:3}},this.TextViewer())
     	 )

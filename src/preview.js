@@ -4,12 +4,11 @@ const ReactDOM=require("react-dom");
 const E=React.createElement;
 const PT=React.PropTypes;
 
-
 const Preview=React.createClass({
 	getInitialState:function(){
 		const parts=this.parseText(this.props.data);
 		return {parts};
-
+/*
 		return {parts:[
 				["z","林傳韓生推詩之意而爲內外傳數萬言其語頗與齊魯閒殊然其歸一也"+
 "　又少也顏延之庭誥文選書務一不尚煩密何承天答顏永嘉書竊願吾子舍兼而遵一也"+
@@ -34,12 +33,31 @@ const Preview=React.createClass({
 				["wh","康熙字典"]
 
 			]}
+*/
+	}
+	,contextTypes:{
+		action:PT.func
+	}
+	,isNonChar:function(code){
+		if (code>=0x3000&&code<=0x303f) return true;//cjk puncuation
+		if (code<0x7f) return true;
+		if (code>=0xff00&&code<=0xff9f) return true;//full width
+		return false;
 	}
 	,getTextFirstCh:function(str,count){
 		var i=0;
 		while (i<str.length && count){
 			const code=str.charCodeAt(i);
 			if (code>=0xd800&&code<=0xd900) i++;
+			else if (str[i]=="&") {
+				while (i<str.length) {
+					if (str[i]==";") break;
+					i++;
+				}
+			} else if (this.isNonChar(code)){
+				count++;
+			}
+
 			i++;count--;
 		}
 		return str.substr(0,i);
@@ -49,27 +67,52 @@ const Preview=React.createClass({
 		while (i<str.length){
 			const code=str.charCodeAt(i);
 			if (code>=0xd800&&code<=0xd900) i++;
+			else if (str[i]=="&") {
+				while (i<str.length) {
+					if (str[i]==";") break;
+					i++;
+				}
+			} else if (this.isNonChar(code)){
+				c--;
+			}
 			i++;c++;
 		}
 		return c;
 	}
+
 	,parseText:function(str){
 		var lines=str.split("/");
-		var parts=[],part;
-		for (var i=lines.length-1;i>=0;i--) {
+		var parts=[],part,offset=0,i,linestart=[],linecount=0;
+		const getZ=function(z,line,startch){
+			z=z.replace(/[─「」，、．；《》：。〈〉\n]/g,"");
+			z=z.replace(/#\d+/g,"");
+
+			if (z=="㉆") {
+				return ["an","㉆",line,startch];
+			} else {
+				return ["z",z,line,startch];
+			}
+		}
+		for (i=0;i<lines.length-1;i++) {
+			linestart.push(linecount)
+			linecount+=lines[i].length+1;
+		}
+		linestart.push(linecount);
+		for (i=lines.length-1;i>=0;i--) {
 			part=[];
 			var  line=lines[i];
-			line=line.replace(/[─「」，、．；《》：。〈〉\n]/g,"");
-			line=line.replace(/#\d+/g,"");
 
-			var previdx=0;
+			var previdx=0,z;
 			line.replace(/\{(.*?)\}/g,function(m,m1,idx){
-				if (idx) part.push(["z",line.substr(previdx,idx)]);
-			
-				part.push(["wh",m1]);
+				z=line.substring(previdx,idx);
+				if (idx) part.push(getZ(z,linestart[i]+previdx));
+				part.push(["wh",m1,linestart[i]+idx]);
 				previdx=idx+m.length;
 			});
-			if (previdx<line.length-1) part.push(["z",line.substr(previdx).trim()]);
+			z=line.substr(previdx).trim();
+			if (previdx<line.length) {
+				part.push(getZ(z,linestart[i]+previdx));
+			}
 			part.push(["br"]);
 
 			parts=parts.concat(part);
@@ -78,27 +121,66 @@ const Preview=React.createClass({
 	}
 	,renderPart:function(part){
 		var out=[];
-		const type=part[0],text=part[1];
+		const type=part[0],text=part[1],start=part[2];
+		var cls={"data-start":start};
 		if (type==="wh") {
-			out.push(E("span",{className:"wh"},text));
+			cls.className="wh";
+			out.push(E("span",cls,text));
 		} else if (type==="br") {
 			out.push(E("br"));
 		} else if (type==="an") {
-			out.push(E("span",{className:"an"},"古文"));
+			cls.className="an";
+			out.push(E("span",cls,"古文"));
 		} else if (type==="z") {
 			var w=Math.floor(this.chcount(text)/2);
 			if (this.chcount(text)%2==1) w++;
 			const right=this.getTextFirstCh(text,w);
 			const left=text.substr(right.length);
-			out.push(E("span",{className:"warichu warichu"+w},
+			cls.className="warichu warichu"+w;
+			out.push(E("span",cls,
 				E("span",{className:"warichu-right"},right)
 				,E("span",{className:"warichu-left"},left)
 			));
 		}
 		return out;
 	}
+	,onmousemove:function(e){
+		const ruler=ReactDOM.findDOMNode(this.refs.ruler);
+	
+		ruler.style.top=e.clientY+3;//make sure the underlay is clickable
+	}
+	,guestCharPos:function(cheight,x,y,w,h,side){
+		const ccount=h/cheight;
+		var c=Math.floor((y/h) * ccount);
+		if (side) c+=ccount;
+		return c;
+	}
+	,guestCharHeight:function(str,h){
+		var count=this.chcount(str);
+		if (count%2==1)count++;//z always has even number
+		return (h/count);
+	}
+	,onclick:function(e){
+		var nod=e.target;
+		const side=nod.className.indexOf("left")>-1?1:0;
+		const cheight=this.guestCharHeight(nod.innerText,nod.offsetHeight);
+
+		if (!nod.dataset.start) nod=nod.parentElement;
+
+		const ch=this.guestCharPos(cheight,e.clientX-nod.offsetLeft,
+			e.clientY-nod.offsetTop,nod.offsetWidth,nod.offsetHeight,side);
+
+		const start=parseInt(nod.dataset.start,10);
+		const text=this.props.data.substr(start);
+		const chpos=this.getTextFirstCh(text,ch+2).length;
+		this.context.action("pinpoint",start+chpos);
+	}
 	,render:function(){
-		return E("div",{className:"v"},this.state.parts.map(this.renderPart) );
+		return E("div",{className:"v"},
+			E("div",{className:"ruler",ref:"ruler"}),
+			E("div",{onMouseMove:this.onmousemove,onClick:this.onclick}
+				,this.state.parts.map(this.renderPart)) 
+		);
 	}
 });
 module.exports=Preview;
