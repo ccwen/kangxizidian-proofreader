@@ -85,7 +85,7 @@ const Preview=React.createClass({
 		var parts=[],part,offset=0,i,linestart=[],linecount=0;
 		const getZ=function(z,line,startch){
 			z=z.replace(/[─「」，、．；《》：。〈〉\n]/g,"");
-			z=z.replace(/#\d+/g,"");
+			z=z.replace(/#\d+\.\d+/g,"");
 
 			if (z=="㉆") {
 				return ["an","㉆",line,startch];

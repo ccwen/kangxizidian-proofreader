@@ -1,5 +1,5 @@
 ﻿/* application css */
-#main {font-size:150%}
+#main {font-size:150%;}
 .hl {color:red;}
 .tagmarker{font-size:50%;}
 .pbmarker{background: darkblue; border-radius:5px;color:white;}
@@ -18,14 +18,14 @@
 		cursor:pointer;
     -webkit-writing-mode: vertical-lr;
     font-size:25px;
-    font-family: "DFKai-SB";
     height:1920;
     overflow-y:auto;
 }
 .warichu {
   position:relative;
   width:200%;
-  font-family:"MingLiU";
+  font-family: MingLiU;
+  white-space: nowrap
 }
 .an {
 	font-size:50%;
