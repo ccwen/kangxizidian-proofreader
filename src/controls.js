@@ -41,7 +41,7 @@ var loadSaveButtons=React.createClass({
 		this.setState({starttime:new Date(),elapse:0});
 		this.context.getter("file",this.state.fn,function(data){
 			action("loaded",data);
-			localStorage.setItem("pts_workingfn",fn);
+			localStorage.setItem("kangxizidian_workingfn",fn);
 		});
 	}
 	,loadnextfile:function(){

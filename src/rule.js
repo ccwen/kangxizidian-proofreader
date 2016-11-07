@@ -17,21 +17,35 @@ const fs=require("ksana2015-proofreader").socketfs;
 var doc=null;
 var footnote=null;
 const {action}=require("ksana2015-proofreader").model;
-const pdfs=["kx-06-0001-0200","kx-06-0201-0400",
-"kx-06-0401-0600","kx-06-0601-0800","kx-06-0801-1000",
-"kx-06-1001-1200","kx-06-1201-1400","kx-06-1401-1600"];
+const pdfs=[
+	["kx-01-01",1,96],
+	["kx-01-02",97,202],
+	["kx-01-03",203,300],
+	["kx-01-04",301,414],
+	["kx-01-05",415,528],
+	["kx-01-06",529,650],
+	["kx-01-07",651,802],
+	["kx-01-08",803,942],
+	["kx-01-09",943,1057],
+	["kx-01-10",1059,1220],
+	["kx-01-11",1221,1358],
+	["kx-01-12",1359,1466],
+	["kx-02",1467,1504],
+	["kx-03a",1505,1560],
+	["kx-03b",1561,1661]
+];
 
 var getPDFPage=function(pageid) {
-	if (!pageid)return;
+	if (!pageid || !pageid.match)return;
 	var m=pageid.match(/(\d+)/);
 	if (!m)return ;
-
+	var pdffn,startpage,endpage;
 	const page=parseInt(m[1],10);
-	const f=Math.round(page/200);
-
-	var pdffn="pdf/"+pdfs[f]+".pdf";
-	console.log(pdffn)
-	return {pdffn,page};
+	for (var i=0;i<pdfs.length;i++) {
+		pdffn="pdf/"+pdfs[i][0]+".pdf", startpage=pdfs[i][1], endpage=pdfs[i][2];
+		if(page>=startpage && page<=endpage) break;
+	}
+	return {pdffn,page:1+page-startpage};
 }
 var init=function(){
 	fs.setDataroot("kangxizidian-corpus/out/")	;
